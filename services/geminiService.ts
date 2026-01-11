@@ -31,27 +31,35 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
 
   try {
     const expectedId = url.match(/\d{15,}/)?.[0];
-    const userHandle = url.split('/')[3];
+    const userHandle = url.split('/')[3] || 'unknown';
 
-    // Construct proxy URLs which often expose metadata to search
+    // 1. Proxy URLs (Best for fresh content metadata)
     const fxtwitter = `fxtwitter.com/${userHandle}/status/${expectedId}`;
     const vxtwitter = `vxtwitter.com/${userHandle}/status/${expectedId}`;
+
+    // 2. Archive URLs (Best for deleted/old content)
+    const wayback = `web.archive.org/web/*/twitter.com/${userHandle}/status/${expectedId}`;
+    const archiveIs = `archive.is/twitter.com/${userHandle}/status/${expectedId}`;
 
     const prompt = `Analyze the following social media link: ${url}.
     
     TARGET ID: ${expectedId}
     
     TASK:
-    1. Search for these specific proxy URLs which contain the accurate text in their metadata:
+    1. Search for these specific PROXY URLs (they often contain the text in snippet):
        - "${fxtwitter}"
        - "${vxtwitter}"
-    2. Also search for "site:twitter.com ${expectedId}".
+    2. Search for ARCHIVE versions:
+       - "${wayback}"
+       - "${archiveIs}"
+    3. Search for the official URL: "site:twitter.com ${expectedId}"
     
     **CRITICAL EXTRACTION RULES**:
-    - The search result must explicitly reference the ID **${expectedId}**.
-    - If you find a result for "${fxtwitter}" or "${vxtwitter}", the text in the snippet is the CORRECT content. Extract it.
-    - If you find a result for a DIFFERENT ID (e.g. 1900...), IGNORE IT. It is a hallucination.
-    - If you cannot find a result with ID ${expectedId}, return "Content unavailable".
+    - The content MUST belong to the ID **${expectedId}**.
+    - If you find a result for "fxtwitter" or "vxtwitter", the snippet text is likely the correct content.
+    - If you find a result from "archive.org" or "archive.is" matching this ID, extract the text.
+    - **VERIFY**: Does the snippet text match the context of the user/date? (e.g. don't return an Obama tweet for a 2025 ID).
+    - If NO result explicitly links this ID to specific text, return "Content unavailable".
     
     Return the result in JSON format.`;
 
