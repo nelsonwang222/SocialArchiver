@@ -34,24 +34,18 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
     
     TASK:
     **STEP 1 (Primary):** Search for the exact URL provided.
-    - If the search result snippet contains the post text, extract it immediately.
     
-    **STEP 2 (Fallback):** If Step 1 returns generic info, use the 'detective' strategy:
-    - Search for the unique status ID (numbers) from the URL + "twitter" or "x.com" or platform name.
-    - Search for "nitter" + the status ID.
-    - Search for the username + "latest posts" to see if this one appears in recent cache.
+    **STEP 2 (Fallback):** Use the 'detective' strategy searching for the unique status ID (numbers) from the URL.
     
-    **GOAL: Extract the content.**
+    **CRITICAL VERIFICATION**:
+    - You MUST verify that the content you find belongs to the **Exact Status ID** "${url.match(/\d{15,}/)?.[0] || 'ID'}".
+    - Do NOT return a random post from the same user just because the topic feels similar.
+    - Do NOT return a pinned tweet or a recent top tweet if the IDs do not match.
     
     **OUTPUT RULES:**
-    1. **Exact Match**: If you find the verbatim text, return it as strictly the content.
-    2. **Approximation**: If you can only find snippets/references (e.g., "User X posted about Bitcoin price..."), 
-       you MUST prefix the content with: "⚠️ [Approximation]: " followed by the best reconstruction you can make.
-    3. **Failure**: Only return "Content unavailable" if you strictly cannot find *anything* related to this specific post ID/Topic.
-       
-    **CONSTRAINT**:
-    - Do NOT make up a generic bio.
-    - Do NOT hallucinate quotes.
+    1. **Exact Match**: If you find content explicitly linked to this Status ID, return it.
+    2. **Approximation**: If you find a search result that mentions "Status ${url.match(/\d{15,}/)?.[0] || '...'}", use it with "⚠️ [Approximation]: ".
+    3. **Failure**: If you cannot match the ID, return: "Content unavailable (ID verification failed)."
        
     Generate 3-7 relevant keywords.
     
