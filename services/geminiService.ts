@@ -36,17 +36,22 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
     **STEP 1 (Primary):** Search for the exact URL provided.
     - If the search result snippet contains the post text, extract it immediately.
     
-    **STEP 2 (Fallback):** If Step 1 returns generic info (like "Login to Twitter"), use the 'detective' strategy:
-    - Search for the unique status ID (numbers) from the URL + "twitter" or platform name.
+    **STEP 2 (Fallback):** If Step 1 returns generic info, use the 'detective' strategy:
+    - Search for the unique status ID (numbers) from the URL + "twitter" or "x.com" or platform name.
     - Search for "nitter" + the status ID.
+    - Search for the username + "latest posts" to see if this one appears in recent cache.
     
     **GOAL: Extract the content.**
-    - **Priority A**: Direct verbatim text of the post.
-    - **Priority B**: High-confidence summary of *this specific post* found in search snippets.
+    
+    **OUTPUT RULES:**
+    1. **Exact Match**: If you find the verbatim text, return it as strictly the content.
+    2. **Approximation**: If you can only find snippets/references (e.g., "User X posted about Bitcoin price..."), 
+       you MUST prefix the content with: "⚠️ [Approximation]: " followed by the best reconstruction you can make.
+    3. **Failure**: Only return "Content unavailable" if you strictly cannot find *anything* related to this specific post ID/Topic.
        
     **CONSTRAINT**:
-    - Do **NOT** return a general summary of the user's profile/bio.
-    - If you found absolutely ZERO trace of this specific post/ID, return: "Content unavailable via search tools."
+    - Do NOT make up a generic bio.
+    - Do NOT hallucinate quotes.
        
     Generate 3-7 relevant keywords.
     
