@@ -53,11 +53,13 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
        - "${wayback}"
        - "${archiveIs}"
     3. Search for the official URL: "site:twitter.com ${expectedId}"
+    4. **BROAD SEARCH**: Search for the exact Status ID "${expectedId}" on Google to find news articles or blogs that cite this specific post.
     
     **CRITICAL EXTRACTION RULES**:
     - The content MUST belong to the ID **${expectedId}**.
     - If you find a result for "fxtwitter" or "vxtwitter", the snippet text is likely the correct content.
     - If you find a result from "archive.org" or "archive.is" matching this ID, extract the text.
+    - If you find a news article citing "Tweet ${expectedId}", extract the quoted text.
     - **VERIFY**: Does the snippet text match the context of the user/date? (e.g. don't return an Obama tweet for a 2025 ID).
     - If NO result explicitly links this ID to specific text, return "Content unavailable".
     
