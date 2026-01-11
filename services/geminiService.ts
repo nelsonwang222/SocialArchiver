@@ -30,28 +30,20 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
   const ai = new GoogleGenAI({ apiKey });
 
   try {
+    const expectedId = url.match(/\d{15,}/)?.[0];
     const prompt = `Analyze the following social media link: ${url}. 
     
     TASK:
-    **STEP 1:** Search for the Quoted ID: "${url.match(/\d{15,}/)?.[0]}".
-    **STEP 2:** Search for "site:twitter.com ${url.match(/\d{15,}/)?.[0]}" and "nitter ${url.match(/\d{15,}/)?.[0]}".
-    
-    **STEP 3 (Fallback for New Posts):** 
-    - If ID search fails, search for: "${url.split('/')[3] || 'User'} latest tweet".
-    - Look for results dated "mins ago", "hours ago", or "today".
-    
+    **STEP 1:** Search for the Quoted ID: "${expectedId}".
+    **STEP 2:** Search for "site:twitter.com ${expectedId}" and "nitter ${expectedId}".
+    **STEP 3 (Fallback):** Search for "${url.split('/')[3] || 'User'} latest tweet".
+
     **OUTPUT RULES:**
-    1. **Verified**: If you found the EXACT ID, return content with "✅ [Verified]: ".
-    2. **Latest Post Guess**: If you didn't find the ID but found a very recent post (e.g., "posted 1 hour ago") from this user that seems to match the context of a new link, return it with "⚠️ [Likely Latest Post]: ".
-    3. **Failure**: Return "Content unavailable (ID not found)" only if both fail.
+    1. If you found a result with the EXACT ID "${expectedId}", set "foundStatusId" to matches.
+    2. If you found a "Latest Post" without the exact ID, do NOT set "foundStatusId".
+    3. Return the content you found.
     
-    **CONSTRAINT**:
-    - Do NOT return content older than 2 days for the "Latest Post" fallback.
-    - Do NOT return the user's bio.
-    
-    Generate 3-7 relevant keywords.
-    
-    Return the result in JSON format.`;
+    Output JSON with field "foundStatusId" (string) ONLY if verified.`;
 
     const response = await ai.models.generateContent({
       model: "gemini-2.0-flash-exp",
@@ -59,22 +51,47 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
       config: {
         tools: [{ googleSearch: {} }],
         responseMimeType: "application/json",
-        responseSchema: responseSchema,
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            platform: { type: Type.STRING },
+            content: { type: Type.STRING },
+            keywords: { type: Type.ARRAY, items: { type: Type.STRING } },
+            foundStatusId: { type: Type.STRING, description: "The exact Status ID found in the source snippet/URL. Leave empty if not found." }
+          },
+          required: ["platform", "content", "keywords"]
+        },
       },
     });
 
     const text = response.text;
-    if (!text) {
-      throw new Error("No response from Gemini.");
-    }
+    if (!text) throw new Error("No response from Gemini.");
 
     const data = JSON.parse(text);
 
+    // Strict Code-Level Verification
+    let finalContent = data.content;
+
+    if (expectedId) {
+      if (data.foundStatusId === expectedId) {
+        finalContent = `✅ [Verified]: ${finalContent}`;
+      } else if (data.foundStatusId && data.foundStatusId !== expectedId) {
+        // AI found a DIFFERENT ID -> Hallucination regarding the target.
+        finalContent = `⚠️ [Approximation - Wrong ID]: ${finalContent}`;
+      } else {
+        // No ID found -> Likely a guess or latest tweet
+        if (!finalContent.includes("Approximation")) {
+          finalContent = `⚠️ [Likely Latest Post]: ${finalContent}`;
+        }
+      }
+    }
+
     return {
       platform: data.platform || "Unknown",
-      content: data.content || "Could not extract content.",
+      content: finalContent || "Could not extract content.",
       keywords: data.keywords || [],
       originalLink: url,
+      foundStatusId: data.foundStatusId
     };
   } catch (error: any) {
     console.error("Gemini analysis error:", error);

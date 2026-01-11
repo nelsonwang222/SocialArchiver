@@ -3,6 +3,7 @@ export interface AnalyzedPost {
   content: string;
   keywords: string[];
   originalLink: string;
+  foundStatusId?: string; // ID found by the AI in the source
 }
 
 export interface SheetConfig {
