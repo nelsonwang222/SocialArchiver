@@ -35,8 +35,9 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
     
     TASK:
     **STEP 1:** Search for the Quoted ID: "${expectedId}".
-    **STEP 2:** Search for "site:twitter.com ${expectedId}" or "nitter ${expectedId}".
-    **STEP 3 (Fallback):** Search for "${url.split('/')[3] || 'User'} latest tweet".
+    **STEP 2:** Search for "site:fxtwitter.com ${expectedId}" and "site:vxtwitter.com ${expectedId}" (These are metadata proxies).
+    **STEP 3:** Search for "site:twitter.com ${expectedId}" or "nitter ${expectedId}".
+    **STEP 4 (Fallback):** Search for "${url.split('/')[3] || 'User'} latest tweet".
 
     **OUTPUT RULES:**
     1. Identify the **Source URL** where you found the content.
