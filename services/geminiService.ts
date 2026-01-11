@@ -45,7 +45,7 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
     Return the result in JSON format.`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.0-pro",
+      model: "gemini-2.0-flash-exp",
       contents: prompt,
       config: {
         tools: [{ googleSearch: {} }],
