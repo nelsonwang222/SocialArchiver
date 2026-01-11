@@ -33,22 +33,21 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
     const prompt = `Analyze the following social media link: ${url}. 
     
     TASK:
-    **STEP 1:** Search for "site:x.com" + " " + "${url.match(/\d{15,}/)?.[0]}" (Quoted ID is crucial).
-    **STEP 2:** Search for "site:twitter.com" + " " + "${url.match(/\d{15,}/)?.[0]}".
-    **STEP 3:** Search for just the Quoted ID: "${url.match(/\d{15,}/)?.[0]}".
+    **STEP 1:** Search for the Quoted ID: "${url.match(/\d{15,}/)?.[0]}".
+    **STEP 2:** Search for "site:twitter.com ${url.match(/\d{15,}/)?.[0]}" and "nitter ${url.match(/\d{15,}/)?.[0]}".
     
-    **CRITICAL VERIFICATION**:
-    - The search result MUST contain the ID **${url.match(/\d{15,}/)?.[0]}** in either the URL or the Snippet.
-    - If it does not, it is a FAIL. Do not return a "closest match".
+    **STEP 3 (Fallback for New Posts):** 
+    - If ID search fails, search for: "${url.split('/')[3] || 'User'} latest tweet".
+    - Look for results dated "mins ago", "hours ago", or "today".
     
     **OUTPUT RULES:**
-    1. **Verified**: If you found a result with the EXACT ID, verify the content and return it.
-       - Prefix: "✅ [Verified]: "
-    2. **Failure**: If NO result contains this specific long number, return: "Content unavailable (ID not found in index)."
+    1. **Verified**: If you found the EXACT ID, return content with "✅ [Verified]: ".
+    2. **Latest Post Guess**: If you didn't find the ID but found a very recent post (e.g., "posted 1 hour ago") from this user that seems to match the context of a new link, return it with "⚠️ [Likely Latest Post]: ".
+    3. **Failure**: Return "Content unavailable (ID not found)" only if both fail.
     
     **CONSTRAINT**:
-    - Do NOT return content from a different ID.
-    - Do NOT return content from the user's bio/pinned tweet.
+    - Do NOT return content older than 2 days for the "Latest Post" fallback.
+    - Do NOT return the user's bio.
     
     Generate 3-7 relevant keywords.
     
