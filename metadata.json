@@ -1,0 +1,5 @@
+{
+  "name": "Social Link Archiver",
+  "description": "Extracts content and keywords from social media links using Gemini and saves them to a Google Sheet.",
+  "requestFramePermissions": []
+}
