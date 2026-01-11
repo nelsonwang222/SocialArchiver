@@ -33,19 +33,27 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
     const prompt = `Analyze the following social media link: ${url}. 
     
     TASK:
-    **STEP 1 (Primary):** Search for the exact URL provided.
+    **STEP 1:** Search for the specific URL.
+    **STEP 2:** Search for "site:x.com ${url.match(/\d{15,}/)?.[0]}" and "site:twitter.com ${url.match(/\d{15,}/)?.[0]}".
     
-    **STEP 2 (Fallback):** Use the 'detective' strategy searching for the unique status ID (numbers) from the URL.
+    **CRITICAL CONTENT EXTRACTION RULE**:
+    1. Look at the **Search Result URLs**. 
+    2. If a search result's URL contains the requested Status ID ("${url.match(/\d{15,}/)?.[0] || 'ID'}"):
+       - **TRUST this result.**
+       - Extract the text/snippet from this result immediately.
+       - This is a "Verified Approxmation".
     
-    **CRITICAL VERIFICATION**:
-    - You MUST verify that the content you find belongs to the **Exact Status ID** "${url.match(/\d{15,}/)?.[0] || 'ID'}".
-    - Do NOT return a random post from the same user just because the topic feels similar.
-    - Do NOT return a pinned tweet or a recent top tweet if the IDs do not match.
+    3. If NO search result URL matches the ID:
+       - Check for "Nitter" mirrors with the ID.
+       - If still nothing, return: "Content unavailable (Post not indexed)."
     
     **OUTPUT RULES:**
-    1. **Exact Match**: If you find content explicitly linked to this Status ID, return it.
-    2. **Approximation**: If you find a search result that mentions "Status ${url.match(/\d{15,}/)?.[0] || '...'}", use it with "⚠️ [Approximation]: ".
-    3. **Failure**: If you cannot match the ID, return: "Content unavailable (ID verification failed)."
+    - If found via matching URL, prefix with: "✅ [Verified Source]: ".
+    - If found via vague search (no ID match), prefix with "⚠️ [Approximation]: ".
+    
+    **CONSTRAINT**:
+    - Do NOT return a profile bio.
+    - Do NOT return a random recent tweet.
        
     Generate 3-7 relevant keywords.
     
