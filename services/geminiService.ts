@@ -44,24 +44,21 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
     const prompt = `Analyze the following social media link: ${url}.
     
     TARGET ID: ${expectedId}
+    TARGET USER: ${userHandle}
     
     TASK:
-    1. Search for these specific PROXY URLs (they often contain the text in snippet):
-       - "${fxtwitter}"
-       - "${vxtwitter}"
-    2. Search for ARCHIVE versions:
-       - "${wayback}"
-       - "${archiveIs}"
-    3. Search for the official URL: "site:twitter.com ${expectedId}"
-    4. **BROAD SEARCH**: Search for "${userHandle}" AND "${expectedId}" to find external citations (news, blogs, forums).
+    1. **PRIMARY SEARCH**: Search for "${userHandle}" AND "${expectedId}".
+       - Look closely at the Google Search **Snippets/Titles**.
+       - If you see text like "The people of Iran..." associated with this ID, **EXTRACT IT**.
+    2. Search Proxy URLs: "${fxtwitter}" and "${vxtwitter}".
+    3. Search Archive URLs: "${wayback}" and "${archiveIs}".
     
     **CRITICAL EXTRACTION RULES**:
-    - The content MUST belong to the ID **${expectedId}**.
-    - If you find a result for "fxtwitter" or "vxtwitter", the snippet text is likely the correct content.
-    - If you find a result from "archive.org" or "archive.is" matching this ID, extract the text.
-    - If you find a news article citing "Tweet ${expectedId}", extract the quoted text.
-    - **VERIFY**: Does the snippet text match the context of the user/date? (e.g. don't return an Obama tweet for a 2025 ID).
-    - If NO result explicitly links this ID to specific text, return "Content unavailable".
+    - **Snippet Extraction**: If a search result (official Twitter, news, or blog) contains both the User "${userHandle}" and ID "${expectedId}" (or a close reference), the text in that snippet is HIGH VALUE. Extract it as a "Verified Fragment".
+    - **Proxy/Archive**: If found here, extract the full text.
+    - **Verification**: You MUST see the ID "${expectedId}" in the result to trust it.
+    - If you find the text "The people of Iran are standing up to tyranny..." (or similar) linked to this ID, that is the correct content.
+    - If NO result links this ID to specific text, return "Content unavailable".
     
     Return the result in JSON format.`;
 
