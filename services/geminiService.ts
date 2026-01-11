@@ -55,7 +55,8 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
     **CRITICAL EXTRACTION RULES**:
     - **Snippet/Title Match**: If a search result Title or Snippet contains the ID "${expectedId}" (or a close match), TRUST the text associated with it.
     - **External Citations**: If you find the ID in a news article, blog, or secondary site (like "note.com"), EXTRACT the summary of the tweet from that page.
-    - **Contextual Verification**: If the search finding is about "Elon Musk" and "Open Sourcing Algorithm", and implies it is THIS tweet, EXTRACT IT. 
+    - **Contextual Verification**: If the search finding mentions the **User** ("${userHandle}") and **Content** related to the ID, EXTRACT IT. 
+    - **Generalization**: This applies to ANY user (e.g. politics, tech, crypto). Trust the search result if it links the ID to text.
     - **DO NOT** require the User Handle and ID to be right next to each other in the snippet. As long as they are in the same result context, it is valid.
     
     If you find the content, output it. If absolutely nothing matches the ID, return "Content unavailable".
