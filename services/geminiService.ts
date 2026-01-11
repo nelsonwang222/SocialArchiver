@@ -35,15 +35,15 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
     
     TASK:
     **STEP 1:** Search for the Quoted ID: "${expectedId}".
-    **STEP 2:** Search for "site:twitter.com ${expectedId}" and "nitter ${expectedId}".
+    **STEP 2:** Search for "site:twitter.com ${expectedId}" or "nitter ${expectedId}".
     **STEP 3 (Fallback):** Search for "${url.split('/')[3] || 'User'} latest tweet".
 
     **OUTPUT RULES:**
-    1. If you found a result with the EXACT ID "${expectedId}", set "foundStatusId" to matches.
-    2. If you found a "Latest Post" without the exact ID, do NOT set "foundStatusId".
-    3. Return the content you found.
+    1. Identify the **Source URL** where you found the content.
+    2. Extract the content.
+    3. Return the keywords.
     
-    Output JSON with field "foundStatusId" (string) ONLY if verified.`;
+    Output JSON.`;
 
     const response = await ai.models.generateContent({
       model: "gemini-2.0-flash-exp",
@@ -57,7 +57,7 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
             platform: { type: Type.STRING },
             content: { type: Type.STRING },
             keywords: { type: Type.ARRAY, items: { type: Type.STRING } },
-            foundStatusId: { type: Type.STRING, description: "The exact Status ID found in the source snippet/URL. Leave empty if not found." }
+            sourceUrl: { type: Type.STRING, description: "The specific URL of the search result where the content was found." }
           },
           required: ["platform", "content", "keywords"]
         },
@@ -69,17 +69,19 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
 
     const data = JSON.parse(text);
 
-    // Strict Code-Level Verification
+    // Strict Code-Level Verification via Source Link
     let finalContent = data.content;
+    const foundStatusId = data.sourceUrl?.match(/\d{15,}/)?.[0];
 
     if (expectedId) {
-      if (data.foundStatusId === expectedId) {
+      if (foundStatusId === expectedId) {
         finalContent = `✅ [Verified]: ${finalContent}`;
-      } else if (data.foundStatusId && data.foundStatusId !== expectedId) {
-        // AI found a DIFFERENT ID -> Hallucination regarding the target.
+      } else if (foundStatusId && foundStatusId !== expectedId) {
+        // AI found a page with a different Status ID -> Wrong Tweet
         finalContent = `⚠️ [Approximation - Wrong ID]: ${finalContent}`;
       } else {
-        // No ID found -> Likely a guess or latest tweet
+        // Source URL doesn't have an ID (e.g. user profile, generic page)
+        // or AI didn't provide a URL.
         if (!finalContent.includes("Approximation")) {
           finalContent = `⚠️ [Likely Latest Post]: ${finalContent}`;
         }
@@ -91,7 +93,6 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
       content: finalContent || "Could not extract content.",
       keywords: data.keywords || [],
       originalLink: url,
-      foundStatusId: data.foundStatusId
     };
   } catch (error: any) {
     console.error("Gemini analysis error:", error);
