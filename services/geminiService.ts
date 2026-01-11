@@ -33,14 +33,22 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
     const prompt = `Analyze the following social media link: ${url}. 
     
     TASK:
-    1. Identify the Platform.
-    2. REQUIRED: Use the 'googleSearch' tool to find the exact text of this post.
-       - **STRATEGY**: Extract the unique ID (e.g., status ID) from the URL and search for that ID directly.
-       - Look for results from nitter.net, archives, or aggregators that index social media posts by ID.
-    3. **GOAL: Extract the VERBATIM text.**
-       - If you find the text, return it exactly.
-       - If you cannot find the text, return exactly: "COULD_NOT_FETCH_CONTENT" (do not generate a summary).
-    4. Generate 3-7 relevant keywords.
+    **STEP 1 (Primary):** Search for the exact URL provided.
+    - If the search result snippet contains the post text, extract it immediately.
+    
+    **STEP 2 (Fallback):** If Step 1 returns generic info (like "Login to Twitter"), use the 'detective' strategy:
+    - Search for the unique status ID (numbers) from the URL + "twitter" or platform name.
+    - Search for "nitter" + the status ID.
+    
+    **GOAL: Extract the content.**
+    - **Priority A**: Direct verbatim text of the post.
+    - **Priority B**: High-confidence summary of *this specific post* found in search snippets.
+       
+    **CONSTRAINT**:
+    - Do **NOT** return a general summary of the user's profile/bio.
+    - If you found absolutely ZERO trace of this specific post/ID, return: "Content unavailable via search tools."
+       
+    Generate 3-7 relevant keywords.
     
     Return the result in JSON format.`;
 
