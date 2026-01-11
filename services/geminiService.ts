@@ -30,74 +30,37 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
   const ai = new GoogleGenAI({ apiKey });
 
   try {
-    const expectedId = url.match(/\d{15,}/)?.[0];
     const prompt = `Analyze the following social media link: ${url}. 
     
     TASK:
-    **STEP 1:** Search for the Quoted ID: "${expectedId}".
-    **STEP 2:** Search for "site:fxtwitter.com ${expectedId}" and "site:vxtwitter.com ${expectedId}" (These are metadata proxies).
-    **STEP 3:** Search for "site:twitter.com ${expectedId}" or "nitter ${expectedId}".
-    **STEP 4 (Fallback):** Search for "${url.split('/')[3] || 'User'} latest tweet".
-
-    **OUTPUT RULES:**
-    1. Identify the **Source URL** where you found the content.
-    2. Extract the content.
-    3. Return the keywords.
+    1. Identify the Platform.
+    2. REQUIRED: Use the 'googleSearch' tool to find the content of this post. Search for the URL itself or the likely text content.
+    3. Even if the page is behind a login wall (like X/Twitter), use the search results (snippets, cached text, or cross-references) to reconstruct the main message or topic.
+    4. Summarize the content clearly. Do not give up or say you cannot access it. Make a best-effort inference based on the search data.
+    5. Generate 3-7 relevant keywords.
     
-    **ANTI-HALLUCINATION RULES:**
-    - Twitter/X results often show "Pinned Tweets" or "More tweets" if the main one is login-walled.
-    - **DO NOT** extract text from "Pinned Tweet", "More to explore", or unrelated sidebars.
-    - If the main tweet text is hidden, return "Content unavailable" (so we can try the fallback).
-    - **VERIFY THE DATE**: If the post text is from years ago (e.g. 2012) but the Link ID is new (19 digits starts with 18 or 20), it is WRONG. Rejects it.
-    
-    Output JSON.`;
+    Return the result in JSON format.`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash-exp",
+      model: "gemini-2.0-flash-exp", // Updated to a valid model if needed, or keep previous
       contents: prompt,
       config: {
         tools: [{ googleSearch: {} }],
         responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            platform: { type: Type.STRING },
-            content: { type: Type.STRING },
-            keywords: { type: Type.ARRAY, items: { type: Type.STRING } },
-            sourceUrl: { type: Type.STRING, description: "The specific URL of the search result where the content was found." }
-          },
-          required: ["platform", "content", "keywords"]
-        },
+        responseSchema: responseSchema,
       },
     });
 
     const text = response.text;
-    if (!text) throw new Error("No response from Gemini.");
+    if (!text) {
+      throw new Error("No response from Gemini.");
+    }
 
     const data = JSON.parse(text);
 
-    // Strict Code-Level Verification via Source Link
-    let finalContent = data.content;
-    const foundStatusId = data.sourceUrl?.match(/\d{15,}/)?.[0];
-
-    if (expectedId) {
-      if (foundStatusId === expectedId) {
-        finalContent = `✅ [Verified]: ${finalContent}`;
-      } else if (foundStatusId && foundStatusId !== expectedId) {
-        // AI found a page with a different Status ID -> Wrong Tweet
-        finalContent = `⚠️ [Approximation - Wrong ID]: ${finalContent}`;
-      } else {
-        // Source URL doesn't have an ID (e.g. user profile, generic page)
-        // or AI didn't provide a URL.
-        if (!finalContent.includes("Approximation")) {
-          finalContent = `⚠️ [Likely Latest Post]: ${finalContent}`;
-        }
-      }
-    }
-
     return {
       platform: data.platform || "Unknown",
-      content: finalContent || "Could not extract content.",
+      content: data.content || "Could not extract content.",
       keywords: data.keywords || [],
       originalLink: url,
     };
