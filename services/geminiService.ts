@@ -1,8 +1,6 @@
 import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { AnalyzedPost } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
 const responseSchema: Schema = {
   type: Type.OBJECT,
   properties: {
@@ -24,6 +22,13 @@ const responseSchema: Schema = {
 };
 
 export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
+    throw new Error("Gemini API Key is missing. Please configure it in the project settings or .env file.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
+
   try {
     const prompt = `Analyze the following social media link: ${url}. 
     
@@ -34,7 +39,7 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
     Return the result in JSON format.`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.0-flash-exp", // Updated to a valid model if needed, or keep previous
       contents: prompt,
       config: {
         tools: [{ googleSearch: {} }],
@@ -56,8 +61,10 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
       keywords: data.keywords || [],
       originalLink: url,
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini analysis error:", error);
-    throw new Error("Failed to analyze the link. Please check the URL and try again.");
+    // Improve error messaging
+    const msg = error.message || "Failed to analyze the link.";
+    throw new Error(msg);
   }
 };
