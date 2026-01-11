@@ -34,20 +34,18 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
     
     TASK:
     1. Identify the Platform.
-    2. REQUIRED: Use the 'googleSearch' tool to find the **exact text content** of this specific post.
-       - Search for the URL to find cross-posts or aggregators.
-       - Search for distinct phrases from the URL if applicable.
-    3. **GOAL: Extract the VERBATIM text of the post.** 
-       - Do NOT just summarize who the user is.
-       - Do NOT hallucinate content based on the username.
-       - If you find the post text in a search snippet, return THAT text exactly.
-    4. If exact text is absolutely impossible to find, provide the most detailed summary possible of *this specific post's topic*, not the user's general vibe.
-    5. Generate 3-7 relevant keywords.
+    2. REQUIRED: Use the 'googleSearch' tool to find the exact text of this post.
+       - **STRATEGY**: Extract the unique ID (e.g., status ID) from the URL and search for that ID directly.
+       - Look for results from nitter.net, archives, or aggregators that index social media posts by ID.
+    3. **GOAL: Extract the VERBATIM text.**
+       - If you find the text, return it exactly.
+       - If you cannot find the text, return exactly: "COULD_NOT_FETCH_CONTENT" (do not generate a summary).
+    4. Generate 3-7 relevant keywords.
     
     Return the result in JSON format.`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash-exp", // Updated to a valid model if needed, or keep previous
+      model: "gemini-1.5-pro",
       contents: prompt,
       config: {
         tools: [{ googleSearch: {} }],
