@@ -44,6 +44,12 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
     2. Extract the content.
     3. Return the keywords.
     
+    **ANTI-HALLUCINATION RULES:**
+    - Twitter/X results often show "Pinned Tweets" or "More tweets" if the main one is login-walled.
+    - **DO NOT** extract text from "Pinned Tweet", "More to explore", or unrelated sidebars.
+    - If the main tweet text is hidden, return "Content unavailable" (so we can try the fallback).
+    - **VERIFY THE DATE**: If the post text is from years ago (e.g. 2012) but the Link ID is new (19 digits starts with 18 or 20), it is WRONG. Rejects it.
+    
     Output JSON.`;
 
     const response = await ai.models.generateContent({
