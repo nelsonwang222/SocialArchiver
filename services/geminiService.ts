@@ -30,13 +30,28 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
   const ai = new GoogleGenAI({ apiKey });
 
   try {
-    const prompt = `Analyze the following social media link: ${url}. 
+    const expectedId = url.match(/\d{15,}/)?.[0];
+    const userHandle = url.split('/')[3];
+
+    // Construct proxy URLs which often expose metadata to search
+    const fxtwitter = `fxtwitter.com/${userHandle}/status/${expectedId}`;
+    const vxtwitter = `vxtwitter.com/${userHandle}/status/${expectedId}`;
+
+    const prompt = `Analyze the following social media link: ${url}.
     
-    1. Identify the Platform.
-    2. REQUIRED: Use the 'googleSearch' tool to find the content of this post. Search for the URL itself or the likely text content.
-    3. If search fails, return "Content unavailable".
-    4. **CRITICAL**: Do NOT guess the date or topic based on the ID numbers. IDs are not dates.
-    5. Generate 3-7 relevant keywords.
+    TARGET ID: ${expectedId}
+    
+    TASK:
+    1. Search for these specific proxy URLs which contain the accurate text in their metadata:
+       - "${fxtwitter}"
+       - "${vxtwitter}"
+    2. Also search for "site:twitter.com ${expectedId}".
+    
+    **CRITICAL EXTRACTION RULES**:
+    - The search result must explicitly reference the ID **${expectedId}**.
+    - If you find a result for "${fxtwitter}" or "${vxtwitter}", the text in the snippet is the CORRECT content. Extract it.
+    - If you find a result for a DIFFERENT ID (e.g. 1900...), IGNORE IT. It is a hallucination.
+    - If you cannot find a result with ID ${expectedId}, return "Content unavailable".
     
     Return the result in JSON format.`;
 
