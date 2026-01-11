@@ -51,6 +51,7 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
        - Also try: "${userHandle}" "${expectedId}" (quoted).
     2. Search Proxy URLs: "${fxtwitter}" and "${vxtwitter}".
     3. Search Archive URLs: "${wayback}" and "${archiveIs}".
+    4. **BROAD ID SEARCH**: Search for the ID "${expectedId}" alone.
     
     **CRITICAL EXTRACTION RULES**:
     - **Snippet/Title Match**: If a search result Title or Snippet contains the ID "${expectedId}" (or a close match), TRUST the text associated with it.
