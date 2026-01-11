@@ -47,7 +47,8 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
     TARGET USER: ${userHandle}
     
     TASK:
-    1. **PRIMARY SEARCH**: Search for "${userHandle}" AND "${expectedId}".
+    1. **PRIMARY SEARCH**: Search for "${userHandle} ${expectedId}".
+       - Also try: "${userHandle}" "${expectedId}" (quoted).
        - Look closely at the Google Search **Snippets/Titles**.
        - If you see text like "The people of Iran..." associated with this ID, **EXTRACT IT**.
     2. Search Proxy URLs: "${fxtwitter}" and "${vxtwitter}".
