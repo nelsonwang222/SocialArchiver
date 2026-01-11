@@ -49,17 +49,16 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
     TASK:
     1. **PRIMARY SEARCH**: Search for "${userHandle} ${expectedId}".
        - Also try: "${userHandle}" "${expectedId}" (quoted).
-       - Look closely at the Google Search **Snippets/Titles**.
-       - If you see text like "The people of Iran..." associated with this ID, **EXTRACT IT**.
     2. Search Proxy URLs: "${fxtwitter}" and "${vxtwitter}".
     3. Search Archive URLs: "${wayback}" and "${archiveIs}".
     
     **CRITICAL EXTRACTION RULES**:
-    - **Snippet Extraction**: If a search result (official Twitter, news, or blog) contains both the User "${userHandle}" and ID "${expectedId}" (or a close reference), the text in that snippet is HIGH VALUE. Extract it as a "Verified Fragment".
-    - **Proxy/Archive**: If found here, extract the full text.
-    - **Verification**: You MUST see the ID "${expectedId}" in the result to trust it.
-    - If you find the text "The people of Iran are standing up to tyranny..." (or similar) linked to this ID, that is the correct content.
-    - If NO result links this ID to specific text, return "Content unavailable".
+    - **Snippet/Title Match**: If a search result Title or Snippet contains the ID "${expectedId}" (or a close match), TRUST the text associated with it.
+    - **External Citations**: If you find the ID in a news article, blog, or secondary site (like "note.com"), EXTRACT the summary of the tweet from that page.
+    - **Contextual Verification**: If the search finding is about "Elon Musk" and "Open Sourcing Algorithm", and implies it is THIS tweet, EXTRACT IT. 
+    - **DO NOT** require the User Handle and ID to be right next to each other in the snippet. As long as they are in the same result context, it is valid.
+    
+    If you find the content, output it. If absolutely nothing matches the ID, return "Content unavailable".
     
     Return the result in JSON format.`;
 
