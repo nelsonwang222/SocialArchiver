@@ -32,9 +32,12 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
   try {
     const prompt = `Analyze the following social media link: ${url}. 
     
+    TASK:
     1. Identify the Platform.
-    2. Try to understand the content of the post using the available search tool. If you can't access the specific post text directly due to privacy walls, infer the context or topic from the URL metadata and search snippets.
-    3. Generate relevant keywords.
+    2. REQUIRED: Use the 'googleSearch' tool to find the content of this post. Search for the URL itself or the likely text content.
+    3. Even if the page is behind a login wall (like X/Twitter), use the search results (snippets, cached text, or cross-references) to reconstruct the main message or topic.
+    4. Summarize the content clearly. Do not give up or say you cannot access it. Make a best-effort inference based on the search data.
+    5. Generate 3-7 relevant keywords.
     
     Return the result in JSON format.`;
 
