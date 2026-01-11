@@ -34,9 +34,14 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
     
     TASK:
     1. Identify the Platform.
-    2. REQUIRED: Use the 'googleSearch' tool to find the content of this post. Search for the URL itself or the likely text content.
-    3. Even if the page is behind a login wall (like X/Twitter), use the search results (snippets, cached text, or cross-references) to reconstruct the main message or topic.
-    4. Summarize the content clearly. Do not give up or say you cannot access it. Make a best-effort inference based on the search data.
+    2. REQUIRED: Use the 'googleSearch' tool to find the **exact text content** of this specific post.
+       - Search for the URL to find cross-posts or aggregators.
+       - Search for distinct phrases from the URL if applicable.
+    3. **GOAL: Extract the VERBATIM text of the post.** 
+       - Do NOT just summarize who the user is.
+       - Do NOT hallucinate content based on the username.
+       - If you find the post text in a search snippet, return THAT text exactly.
+    4. If exact text is absolutely impossible to find, provide the most detailed summary possible of *this specific post's topic*, not the user's general vibe.
     5. Generate 3-7 relevant keywords.
     
     Return the result in JSON format.`;
