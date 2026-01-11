@@ -33,28 +33,23 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
     const prompt = `Analyze the following social media link: ${url}. 
     
     TASK:
-    **STEP 1:** Search for the specific URL.
-    **STEP 2:** Search for "site:x.com ${url.match(/\d{15,}/)?.[0]}" and "site:twitter.com ${url.match(/\d{15,}/)?.[0]}".
+    **STEP 1:** Search for "site:x.com" + " " + "${url.match(/\d{15,}/)?.[0]}" (Quoted ID is crucial).
+    **STEP 2:** Search for "site:twitter.com" + " " + "${url.match(/\d{15,}/)?.[0]}".
+    **STEP 3:** Search for just the Quoted ID: "${url.match(/\d{15,}/)?.[0]}".
     
-    **CRITICAL CONTENT EXTRACTION RULE**:
-    1. Look at the **Search Result URLs**. 
-    2. If a search result's URL contains the requested Status ID ("${url.match(/\d{15,}/)?.[0] || 'ID'}"):
-       - **TRUST this result.**
-       - Extract the text/snippet from this result immediately.
-       - This is a "Verified Approxmation".
-    
-    3. If NO search result URL matches the ID:
-       - Check for "Nitter" mirrors with the ID.
-       - If still nothing, return: "Content unavailable (Post not indexed)."
+    **CRITICAL VERIFICATION**:
+    - The search result MUST contain the ID **${url.match(/\d{15,}/)?.[0]}** in either the URL or the Snippet.
+    - If it does not, it is a FAIL. Do not return a "closest match".
     
     **OUTPUT RULES:**
-    - If found via matching URL, prefix with: "✅ [Verified Source]: ".
-    - If found via vague search (no ID match), prefix with "⚠️ [Approximation]: ".
+    1. **Verified**: If you found a result with the EXACT ID, verify the content and return it.
+       - Prefix: "✅ [Verified]: "
+    2. **Failure**: If NO result contains this specific long number, return: "Content unavailable (ID not found in index)."
     
     **CONSTRAINT**:
-    - Do NOT return a profile bio.
-    - Do NOT return a random recent tweet.
-       
+    - Do NOT return content from a different ID.
+    - Do NOT return content from the user's bio/pinned tweet.
+    
     Generate 3-7 relevant keywords.
     
     Return the result in JSON format.`;
