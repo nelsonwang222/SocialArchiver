@@ -78,14 +78,20 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
     });
 
     let text = response.text;
+    console.log("Raw Gemini response:", text); // Debugging
+
     if (!text) {
       throw new Error("No response from Gemini.");
     }
 
-    // Clean up markdown code blocks if present
-    text = text.replace(/```json\n?|\n?```/g, "").trim();
+    // Robust JSON extraction
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error("No JSON object found in Gemini response.");
+    }
 
-    const data = JSON.parse(text);
+    const jsonString = jsonMatch[0];
+    const data = JSON.parse(jsonString);
 
     return {
       platform: data.platform || "Unknown",
