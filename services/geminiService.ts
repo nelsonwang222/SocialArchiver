@@ -62,22 +62,28 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
     
     If you find the content, output it. If absolutely nothing matches the ID, return "Content unavailable".
     
-    Return the result in JSON format.`;
+    Return the result in strictly valid JSON format. Do not use Markdown code blocks. The JSON should follow this structure:
+    {
+      "platform": "string",
+      "content": "string",
+      "keywords": ["string"]
+    }`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash-exp", // Updated to a valid model if needed, or keep previous
+      model: "gemini-2.0-flash-exp",
       contents: prompt,
       config: {
         tools: [{ googleSearch: {} }],
-        responseMimeType: "application/json",
-        responseSchema: responseSchema,
       },
     });
 
-    const text = response.text;
+    let text = response.text;
     if (!text) {
       throw new Error("No response from Gemini.");
     }
+
+    // Clean up markdown code blocks if present
+    text = text.replace(/```json\n?|\n?```/g, "").trim();
 
     const data = JSON.parse(text);
 
