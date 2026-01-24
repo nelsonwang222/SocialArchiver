@@ -86,17 +86,27 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
 
     // Robust JSON extraction
     const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error("No JSON object found in Gemini response.");
+
+    if (jsonMatch) {
+      try {
+        const jsonString = jsonMatch[0];
+        const data = JSON.parse(jsonString);
+        return {
+          platform: data.platform || "Unknown",
+          content: data.content || "Could not extract content.",
+          keywords: data.keywords || [],
+          originalLink: url,
+        };
+      } catch (e) {
+        console.warn("JSON parse failed despite regex match, falling back to raw text:", e);
+      }
     }
 
-    const jsonString = jsonMatch[0];
-    const data = JSON.parse(jsonString);
-
+    // Fallback: Use raw text if JSON extraction fails or regex finds nothing
     return {
-      platform: data.platform || "Unknown",
-      content: data.content || "Could not extract content.",
-      keywords: data.keywords || [],
+      platform: "Unknown",
+      content: text, // Return the raw text so user sees what Gemini said
+      keywords: [],
       originalLink: url,
     };
   } catch (error: any) {
