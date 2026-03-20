@@ -69,8 +69,9 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
       "keywords": ["string"]
     }`;
 
+    console.log("DEBUG: Using Gemini API via @google/genai. Model: gemini-3.1-flash");
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash",
+      model: "gemini-3.1-flash",
       contents: prompt,
       config: {
         tools: [{ googleSearch: {} }],
