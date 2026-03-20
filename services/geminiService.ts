@@ -70,7 +70,7 @@ export const analyzeLink = async (url: string): Promise<AnalyzedPost> => {
     }`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
+      model: "gemini-3-flash",
       contents: prompt,
       config: {
         tools: [{ googleSearch: {} }],
