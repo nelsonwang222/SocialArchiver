@@ -28,7 +28,6 @@ npm run build
 ```
 
 
-
 ## Deployment
 
 This project is configured to deploy to **GitHub Pages** automatically via GitHub Actions.
